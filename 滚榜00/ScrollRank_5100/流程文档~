@@ -1,0 +1,63 @@
+为了滚榜而开发的一个小网站
+需要：
+    所有提交数据
+    比赛封榜时间
+功能：
+    #将提交数据处理成榜单和后续滚榜的操作(X)#如果仅保存操作，那么中间打开页面的将无法正常显示。
+    将提交数据处理成初始榜单，之后一条一条的处理封榜后的提交数据，缓存当前榜单。
+    每处理一条提交数据，广播一条。
+
+接口方法(前端JS)：
+    init()
+    '''
+    返回参数：当前ranklist列表的JSON，列表下标即为排名-1
+    [
+        {
+            "username": username, #用户名
+            "nickname": nickname, #昵称
+            "time": time, #罚时
+            "solved": solved, #通过题数
+            "statuses": {
+                "A": {
+                    "attempted": try_count, #尝试次数(只计算AC与AC前的提交)
+                    "result": result, #此题状态，根据滚榜的操作与否，值可能为AC/F/?/-(?为提交但还没有被滚出来，-代表没有提交过)
+                    "time": time, #通过时间(如果AC了的话)
+                }
+                ...(其他题目)
+            }
+        }
+        ...(其他用户)
+    ]
+    '''
+    
+    update(data)
+    '''
+    由服务器主动触发(广播)
+    函数参数：此次滚的数据
+    {
+        "username": username,
+        "rank": rank,
+        "statu": {
+            "problem": problem, #滚到的题目
+            "result": result, #滚后的结果
+        }
+    }
+    '''
+
+WEB:
+    /index:
+        当前正在滚榜的房间列表
+    /new:
+        上传db文件，新建滚榜
+        提交表单：
+            db文件
+            开始时间(Unix时间戳)
+            封榜时间(Unix时间戳)
+            房间名称
+        返回参数：
+            token(用于触发滚榜)
+            房间名称
+    /<RoomName>:
+        查看对应房间的滚榜
+    /push?key=<Token>&room=<RoomName>:
+        触发器，触发滚榜操作
